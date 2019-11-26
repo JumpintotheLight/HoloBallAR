@@ -69,6 +69,7 @@ public class VRPongPlayerController : NetworkBehaviour
 
     public void OpponentScored()
     {
+        Debug.Log("Opponent Scored");
         pointsLost++;
         CmdScorePoint(playerNum);
     }

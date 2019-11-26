@@ -13,6 +13,7 @@ public class PlayerGoal : NetworkBehaviour
     public int GoalNumber
     {
         get { return goalNum; }
+        set { goalNum = value; }
     }
 
     public void BindToPlayer(uint playerId, bool isVR)
@@ -27,14 +28,19 @@ public class PlayerGoal : NetworkBehaviour
         if (collision.gameObject.tag == "Ball")
         {
             Destroy(collision.gameObject);
-            if (playerIsVR)
+            if (isServer)
+            {
+                Mirror3DPongGameDriver.gameDriver.ScorePoint(goalNum);
+            }
+
+            /*if (playerIsVR)
             {
                 NetworkIdentity.spawned[localPlayerId].gameObject.GetComponent<VRPongPlayerController>().OpponentScored();
             }
             else
             {
                 NetworkIdentity.spawned[localPlayerId].gameObject.GetComponent<PongPlayerController>().OpponentScored();
-            }
+            }*/
 
             //CmdScorePoint(goalNum);
         }

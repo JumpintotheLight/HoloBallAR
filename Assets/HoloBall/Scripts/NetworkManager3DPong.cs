@@ -17,6 +17,7 @@ public class NetworkManager3DPong : NetworkManager
     public Transform secondPlayerSpawn;
     public Transform ballSpawnPoint;
     public GameObject ballPrefab;
+    public GameObject gameDriverPrefab;
     private GameObject ball;
 
     //Override OnStartServer to add handler for Player Message
@@ -25,6 +26,10 @@ public class NetworkManager3DPong : NetworkManager
         base.OnStartServer();
 
         NetworkServer.RegisterHandler<CreateVrPongPlayerMessage>(OnCreatePlayer);
+
+        GameObject gDriver = (GameObject)Instantiate(spawnPrefabs.Find(prefab => prefab.name == gameDriverPrefab.name), Vector3.zero, Quaternion.identity);
+        gDriver.GetComponent<Mirror3DPongGameDriver>().SetBallInfo(ballPrefab, ballSpawnPoint);
+        NetworkServer.Spawn(gDriver);
     }
 
     //Override OnClientConnect to detect if the player is using VR
@@ -52,16 +57,16 @@ public class NetworkManager3DPong : NetworkManager
         }
         else
         {
-            newPlayer = (GameObject)Instantiate(this.playerPrefab, start.position, start.rotation);
+            newPlayer = (GameObject)Instantiate(this.playerPrefab, new Vector3(start.position.x, start.position.y + 1, start.position.z), start.rotation);
         }
         NetworkServer.AddPlayerForConnection(conn, newPlayer);
 
-        if (numPlayers == 2)
+        /*if (numPlayers == 2)
         {
             //ball = Instantiate(spawnPrefabs.Find(prefab => prefab.name == "Ball"));
-            ball = Instantiate(spawnPrefabs.Find(prefab => prefab.name == ballPrefab.name), ballSpawnPoint.position, ballSpawnPoint.rotation);
+           ball = Instantiate(spawnPrefabs.Find(prefab => prefab.name == ballPrefab.name), ballSpawnPoint.position, ballSpawnPoint.rotation);
             NetworkServer.Spawn(ball);
-        }
+        }*/
     }
 
     /*public override void OnServerAddPlayer(NetworkConnection conn)
@@ -96,11 +101,11 @@ public class NetworkManager3DPong : NetworkManager
         }
     }*/
 
+    
+
     public override void OnServerDisconnect(NetworkConnection conn)
     {
-        // destroy ball
-        if (ball != null)
-            NetworkServer.Destroy(ball);
+        Mirror3DPongGameDriver.gameDriver.PlayerDisconnected();
 
         // call base functionality (actually destroys the player)
         base.OnServerDisconnect(conn);

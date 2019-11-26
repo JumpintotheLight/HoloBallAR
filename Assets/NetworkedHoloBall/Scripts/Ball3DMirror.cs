@@ -13,11 +13,6 @@ public class Ball3DMirror : NetworkBehaviour
         
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 
     public void StartBall(Vector3 newVelocity)
     {
@@ -28,8 +23,13 @@ public class Ball3DMirror : NetworkBehaviour
         }
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        this.gameObject.GetComponent<Rigidbody>().AddForce(new Vector3(0, 0, 0.3f), ForceMode.VelocityChange);
+    }
+
     public void OnPlayerDisconnected(NetworkIdentity player)
     {
-        GameObject.Destroy(this);
+        NetworkServer.UnSpawn(this.gameObject);
     }
 }

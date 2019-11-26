@@ -58,8 +58,15 @@ public class PongPlayerController : NetworkBehaviour
 
     public void OpponentScored()
     {
+        Debug.Log("Opponent Scored");
         pointsLost++;
-        Mirror3DPongGameDriver.gameDriver.ScorePoint(playerNum);
+        CmdScorePoint(playerNum);
+    }
+
+    [Command]
+    void CmdScorePoint(int goalNum)
+    {
+        Mirror3DPongGameDriver.gameDriver.ScorePoint(goalNum);
     }
 
     [Command]

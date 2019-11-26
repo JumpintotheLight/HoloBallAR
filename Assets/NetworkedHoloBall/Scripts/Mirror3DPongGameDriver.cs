@@ -9,23 +9,34 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
     public static Mirror3DPongGameDriver gameDriver;
 
     private int priorityPlayer = 1;
-    [SyncVar]
     private int p1Score = 0;
-    [SyncVar]
+    private int p1Wins = 0;
     private int p2Score = 0;
+    private int p2Wins = 0;
     private bool ballMoving = false;
+    [SerializeField]
+    private int winPoint = 12;
+    [SerializeField]
+    private int advantageNeeded = 0;
+    //Temporary field for testing; timer for automaticaly launching ball
+    private float ballStartTime = 3f;
+    private float ballStartTimer = 0;
 
     [SerializeField]
     private GameObject ballPrefab;
-    [SerializeField]
     private Transform ballSpawnPoint;
 
     
     public Text p1ScoreText;
+
+    public Text p1Wintext;
     
     public Text p2ScoreText;
 
+    public Text p2Wintext;
+
     private int playerCount = 0;
+    private bool gameWon = false;
 
     private void Awake()
     {
@@ -33,11 +44,59 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
         {
             if(gameDriver != this)
             {
+                Debug.Log("GD Destroyed");
                 GameObject.Destroy(this.gameObject);
             }
         }
         gameDriver = this;
         GameObject.DontDestroyOnLoad(this.gameObject);
+    }
+
+    public void SetBallInfo(GameObject b, Transform bSP)
+    {
+        ballPrefab = b;
+        ballSpawnPoint = bSP;
+    }
+
+    public int WinPoint
+    {
+        get { return winPoint; }
+        set
+        {
+            if (value >= 5)
+            {
+                winPoint = value;
+            }
+        }
+    }
+
+    public int AdvantageNeeded
+    {
+        get { return advantageNeeded; }
+        set
+        {
+            if (value >= 0)
+            {
+                advantageNeeded = value;
+            }
+        }
+    }
+
+    private void Update()
+    {
+        if(isServer && playerCount == 2)
+        {
+            if (!ballMoving)
+            {
+                ballStartTimer += Time.deltaTime;
+                if (ballStartTimer >= ballStartTime)
+                {
+                    ballStartTimer = 0f;
+                    StartBall(priorityPlayer);
+                }
+            }
+        }
+        
     }
 
     public void StartBall(int playerNum)
@@ -46,7 +105,12 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
         {
             if (playerNum == priorityPlayer)
             {
-                Vector3 ballVelocity = priorityPlayer == 1 ? new Vector3(2f, 0f, 8f) : new Vector3(-2f, 0f, -8f);
+                ballStartTimer = 0;
+                float newX = Random.Range(-2f, 2f);
+                float newY = Random.Range(-1f, 1f);
+                float newZ = Random.Range(6f, 8f);
+                newZ *= priorityPlayer == 1 ? 1 : -1;
+                Vector3 ballVelocity = new Vector3(newX, newY, newZ);
                 GameObject.FindObjectOfType<Ball3DMirror>().StartBall(ballVelocity);
 
                 /*GameObject ball = (GameObject)Instantiate(ballPrefab, ballSpawnPoint.position, ballSpawnPoint.rotation);
@@ -60,22 +124,48 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
 
     public void ScorePoint(int goalNumber)
     {
-        if(goalNumber == 1)
+        Debug.Log("Scoring Point");
+        Debug.Log("IsServer " + isServer);
+        if (goalNumber == 1)
         {
             priorityPlayer = 1;
-            RpcSetScoreText(2, p2Score + 1);
             p2Score++;
+            if(p2Score == winPoint && p2Score - p1Score >= advantageNeeded)
+            {
+                p2Wins++;
+                gameWon = true;
+            }
+            //CmdSetScoreText(2, p2Score);
+            //p2Score++;
         }
         else
         {
             priorityPlayer = 2;
-            RpcSetScoreText(1, p1Score + 1);
             p1Score++;
+            if (p1Score == winPoint && p1Score - p2Score >= advantageNeeded)
+            {
+                p1Wins++;
+                gameWon = true;
+            }
+            //CmdSetScoreText(1, p1Score);
+            //RpcSetScoreText(p1Score, p2Score);
+            //p1Score++;
+        }
+        if (gameWon)
+        {
+            Debug.Log("Game Won!");
+            RpcSetWinText(p1Wins, p2Wins);
+            Reset();
+        }
+        else
+        {
+            RpcSetScoreText(p1Score, p2Score);
+            ballMoving = false;
         }
         Debug.Log("Score: [P1: " + p1Score + "]  [P2: " + p2Score + "]");
         Debug.Log("Priority= " + priorityPlayer);
-        ballMoving = false;
         SpawnBall();
+
     }
 
     /*private void OnP1Score(int newScore)
@@ -97,21 +187,29 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
         NetworkServer.Spawn(ball);
     }
 
-    private void OnPlayerDisconnected(NetworkIdentity player)
+    public void PlayerDisconnected()
     {
-        ballMoving = false;
+        NetworkServer.Destroy(GameObject.FindObjectOfType<Ball3DMirror>().gameObject);
         playerCount--;
-        Reset();
+        HardReset();
     }
 
-    private void Reset()
+    public void Reset()
     {
+        gameWon = false;
         priorityPlayer = 1;
         p1Score = 0;
         p2Score = 0;
         ballMoving = false;
-        p1ScoreText.text = "0";
-        p2ScoreText.text = "0";
+        RpcSetScoreText(0, 0);
+    }
+
+    public void HardReset()
+    {
+        p1Wins = 0;
+        p2Wins = 0;
+        RpcSetWinText(0, 0);
+        Reset();
     }
 
     public int PlayerClockIn(uint pId, bool isVR)
@@ -124,20 +222,62 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
                 g.GetComponent<PlayerGoal>().BindToPlayer(pId, isVR);
             }
         }
+        if (playerCount == 2)
+        {
+            SpawnBall();
+        }
         return playerCount;
     }
 
-    [ClientRpc]
-    void RpcSetScoreText(int playerNum, int newScore)
+    /*[Command]
+    void CmdSetScoreText(int playerNum, int newScore)
     {
-        Debug.Log("Set SCore RPC called");
-        if(playerNum == 1)
+        RpcSetScoreText(playerNum, newScore);
+    }*/
+
+    [ClientRpc]
+    void RpcSetScoreText(int newP1Score, int newP2Score)
+    {
+        if (isClient)
         {
-            p1ScoreText.text = "" + newScore;
+            Debug.Log("Set SCore RPC called");
+            /*if (playerNum == 1)
+            {
+                p1ScoreText.text = "" + newScore;
+            }
+            else
+            {
+                p2ScoreText.text = "" + newScore;
+            }*/
+            if(newP1Score == winPoint-1 && newP1Score-newP2Score >= advantageNeeded)
+            {
+                p1ScoreText.text = "GP";
+            }
+            else
+            {
+                p1ScoreText.text = "" + newP1Score;
+            }
+            if (newP2Score == winPoint - 1 && newP2Score - newP1Score >= advantageNeeded)
+            {
+                p2ScoreText.text = "GP";
+            }
+            else
+            {
+                p2ScoreText.text = "" + newP2Score;
+            }
         }
-        else
+        
+    }
+
+    [ClientRpc]
+    void RpcSetWinText(int newP1Win, int newP2Win)
+    {
+        if (isClient)
         {
-            p2ScoreText.text = "" + newScore;
+            Debug.Log("Set Wins RPC called");
+            p1Wintext.text = "Wins: " + newP1Win;
+            p2Wintext.text = "Wins: " + newP2Win;
         }
+
     }
 }
