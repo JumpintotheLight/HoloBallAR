@@ -249,7 +249,7 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
             {
                 p2ScoreText.text = "" + newScore;
             }*/
-            if(newP1Score == winPoint-1 && newP1Score-newP2Score >= advantageNeeded)
+            if(newP1Score == winPoint-1 && newP1Score-newP2Score >= advantageNeeded -1)
             {
                 p1ScoreText.text = "GP";
             }
@@ -257,7 +257,7 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
             {
                 p1ScoreText.text = "" + newP1Score;
             }
-            if (newP2Score == winPoint - 1 && newP2Score - newP1Score >= advantageNeeded)
+            if (newP2Score == winPoint - 1 && newP2Score - newP1Score >= advantageNeeded -1)
             {
                 p2ScoreText.text = "GP";
             }
