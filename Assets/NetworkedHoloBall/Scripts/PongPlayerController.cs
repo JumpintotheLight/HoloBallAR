@@ -46,10 +46,10 @@ public class PongPlayerController : NetworkBehaviour
 
         transform.Translate(x, 0, z);
 
-        if (Input.GetKeyDown(KeyCode.Space))
+        /*if (Input.GetKeyDown(KeyCode.Space))
         {
             CmdStartBall(playerNum);
-        }
+        }*/
 
         mouseLook.LookRotation(transform, Camera.main.transform);
 
@@ -72,7 +72,8 @@ public class PongPlayerController : NetworkBehaviour
     [Command]
     void CmdPlayerClockIn()
     {
-        playerNum = Mirror3DPongGameDriver.gameDriver.PlayerClockIn(netId, false);
+        playerNum = Mirror3DPongGameDriver.gameDriver.PlayerClockIn(netId, false, connectionToClient);
+        TargetSetClientTextRotation(connectionToClient, playerNum);
         /*foreach (GameObject g in GameObject.FindGameObjectsWithTag("Goal"))
         {
             if (g.GetComponent<PlayerGoal>().GoalNumber == playerNum)
@@ -82,9 +83,15 @@ public class PongPlayerController : NetworkBehaviour
         }*/
     }
 
-    [Command]
-    void CmdStartBall(int pNum)
+    [TargetRpc]
+    void TargetSetClientTextRotation(NetworkConnection target, int pN)
     {
-        Mirror3DPongGameDriver.gameDriver.StartBall(pNum);
+        Mirror3DPongGameDriver.gameDriver.SetClientTextRotation(pN);
     }
+
+    /* [Command]
+     void CmdStartBall(int pNum)
+     {
+         Mirror3DPongGameDriver.gameDriver.StartBall(pNum);
+     }*/
 }

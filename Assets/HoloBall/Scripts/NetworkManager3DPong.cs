@@ -18,6 +18,7 @@ public class NetworkManager3DPong : NetworkManager
     public Transform ballSpawnPoint;
     public GameObject ballPrefab;
     public GameObject gameDriverPrefab;
+    public GameObject managerUI;
     private GameObject ball;
 
     //Override OnStartServer to add handler for Player Message
@@ -30,12 +31,16 @@ public class NetworkManager3DPong : NetworkManager
         GameObject gDriver = (GameObject)Instantiate(spawnPrefabs.Find(prefab => prefab.name == gameDriverPrefab.name), Vector3.zero, Quaternion.identity);
         gDriver.GetComponent<Mirror3DPongGameDriver>().SetBallInfo(ballPrefab, ballSpawnPoint);
         NetworkServer.Spawn(gDriver);
+
+        managerUI.SetActive(true);
     }
 
     //Override OnClientConnect to detect if the player is using VR
     public override void OnClientConnect(NetworkConnection conn)
     {
         base.OnClientConnect(conn);
+
+        managerUI.SetActive(false);
 
         CreateVrPongPlayerMessage newPlayerMessage = new CreateVrPongPlayerMessage
         {
@@ -101,7 +106,6 @@ public class NetworkManager3DPong : NetworkManager
         }
     }*/
 
-    
 
     public override void OnServerDisconnect(NetworkConnection conn)
     {
@@ -109,6 +113,14 @@ public class NetworkManager3DPong : NetworkManager
 
         // call base functionality (actually destroys the player)
         base.OnServerDisconnect(conn);
+    }
+
+    public override void OnStopServer()
+    {
+        base.OnStopServer();
+
+        managerUI.SetActive(false);
+        GameObject.Destroy(Mirror3DPongGameDriver.gameDriver.gameObject);
     }
 }
 

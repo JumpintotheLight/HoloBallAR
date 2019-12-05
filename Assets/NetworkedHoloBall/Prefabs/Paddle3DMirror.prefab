@@ -19,7 +19,7 @@ GameObject:
   - component: {fileID: 1756789363098485783}
   m_Layer: 0
   m_Name: Paddle3DMirror
-  m_TagString: Untagged
+  m_TagString: Paddle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -109,7 +109,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   serverOnly: 0
-  localPlayerAuthority: 1
   m_AssetId: d0b2f324dbfee5b45863b1c6eb964183
   m_SceneId: 0
 --- !u!114 &8516575009320366551

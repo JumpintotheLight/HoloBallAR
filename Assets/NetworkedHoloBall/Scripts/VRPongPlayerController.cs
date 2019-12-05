@@ -67,6 +67,7 @@ public class VRPongPlayerController : NetworkBehaviour
         }
     }
 
+    //Currently not in use
     public void OpponentScored()
     {
         Debug.Log("Opponent Scored");
@@ -74,6 +75,7 @@ public class VRPongPlayerController : NetworkBehaviour
         CmdScorePoint(playerNum);
     }
 
+    //Currently not in use
     [Command]
     void CmdScorePoint(int goalNum)
     {
@@ -83,7 +85,8 @@ public class VRPongPlayerController : NetworkBehaviour
     [Command]
     void CmdPlayerClockIn()
     {
-        playerNum = Mirror3DPongGameDriver.gameDriver.PlayerClockIn(netId, true);
+        playerNum = Mirror3DPongGameDriver.gameDriver.PlayerClockIn(netId, true, connectionToClient);
+        TargetSetClientTextRotation(connectionToClient, playerNum);
         /*foreach (GameObject g in GameObject.FindGameObjectsWithTag("Goal"))
         {
             if(g.GetComponent<PlayerGoal>().GoalNumber == playerNum)
@@ -91,6 +94,12 @@ public class VRPongPlayerController : NetworkBehaviour
                 g.GetComponent<PlayerGoal>().BindToPlayer(netId, true);
             }
         }*/
+    }
+
+    [TargetRpc]
+    void TargetSetClientTextRotation(NetworkConnection target, int pN)
+    {
+        Mirror3DPongGameDriver.gameDriver.SetClientTextRotation(pN);
     }
 
     [Command]

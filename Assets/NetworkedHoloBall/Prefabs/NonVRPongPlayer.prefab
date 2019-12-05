@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 3298274576710661322}
   m_Layer: 0
   m_Name: NonVRPongPlayer
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -243,6 +243,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Paddle3DMirror_Model
       objectReference: {fileID: 0}
+    - target: {fileID: 8516575009320366551, guid: d0b2f324dbfee5b45863b1c6eb964183,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5269526513529346305, guid: d0b2f324dbfee5b45863b1c6eb964183,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -313,17 +318,12 @@ PrefabInstance:
       propertyPath: m_AssetId
       value: 98f18563f186f80488a6a6954a6384ec
       objectReference: {fileID: 0}
-    - target: {fileID: 8516575009320366551, guid: d0b2f324dbfee5b45863b1c6eb964183,
+    - target: {fileID: 3138243519621601205, guid: d0b2f324dbfee5b45863b1c6eb964183,
         type: 3}
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 584125694197553506, guid: d0b2f324dbfee5b45863b1c6eb964183,
-        type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3138243519621601205, guid: d0b2f324dbfee5b45863b1c6eb964183,
         type: 3}
       propertyPath: m_Enabled
       value: 0

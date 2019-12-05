@@ -17,6 +17,14 @@ public class Paddle3DMirror : NetworkBehaviour
     [SyncVar]
     public uint ownerId;
 
+    //fields for position and rotation
+    //private Transform targetHand;
+    [SerializeField]
+    private Vector3 positionOffset;
+    [SerializeField]
+    private Vector3 eularOffset;
+
+
     //Bools for controler inputs
     private bool hasTriggerBeenPressedThisFrame;
     private bool hasGripBeenPressedThisFrame;
@@ -30,6 +38,9 @@ public class Paddle3DMirror : NetworkBehaviour
     private VRPongPlayerController localPlayer;
     private SteamVR_Controller.Device steamDevice;
 
+
+    //fields for calculating velocity
+    private Vector3 prevPos;
     private Vector3 currentVelocity;
 
     public override void OnStartAuthority()
@@ -42,6 +53,10 @@ public class Paddle3DMirror : NetworkBehaviour
 
             //Helper.AttachAtGrip(trackedController.transform, transform);
             gameObject.GetComponent<F_CopyXForms>().target = trackedController.transform;
+            //trackedController.gameObject.AddComponent<FixedJoint>();
+            //trackedController.gameObject.GetComponent<FixedJoint>().connectedBody = this.gameObject.GetComponent<Rigidbody>();
+            //UpdateTransform();
+            //gameObject.GetComponent<FixedJoint>().connectedBody = trackedController.gameObject.GetComponent<Rigidbody>();
 
             localPlayer = NetworkIdentity.spawned[ownerId].GetComponent<VRPongPlayerController>();
 
@@ -95,12 +110,13 @@ public class Paddle3DMirror : NetworkBehaviour
                 hasGripBeenReleasedThisFrame = true;
             isGripPressed = false;
         }
-        currentVelocity = steamDevice.velocity;
     }
 
     // Update is called once per frame
     void Update()
     {
+        //UpdateTransform();
+
         if (!hasAuthority)
         {
             return;
@@ -109,13 +125,32 @@ public class Paddle3DMirror : NetworkBehaviour
         QueryController();
 
        
-        if (hasTriggerBeenPressedThisFrame)
+        /*if (hasTriggerBeenPressedThisFrame)
         {
             OnTriggerPressed();
-        }
+        }*/
     }
 
-    private void OnTriggerPressed()
+    private void UpdateTransform()
+    {
+        this.transform.position = trackedController.transform.position + positionOffset;
+        this.transform.eulerAngles = trackedController.transform.eulerAngles + eularOffset;
+    }
+
+
+    public Vector3 PaddleVelocity()
+    {
+        return steamDevice.velocity;
+    }
+
+    public Vector3 PaddleAngularVelocity()
+    {
+        return steamDevice.angularVelocity;
+    }
+
+    
+
+    /*private void OnTriggerPressed()
     {
         CmdStartBall(localPlayer.PlayerNum);
     }
@@ -124,5 +159,5 @@ public class Paddle3DMirror : NetworkBehaviour
     private void CmdStartBall(int playerNum)
     {
         Mirror3DPongGameDriver.gameDriver.StartBall(playerNum);
-    }
+    }*/
 }
