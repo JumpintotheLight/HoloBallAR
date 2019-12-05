@@ -88,7 +88,14 @@ public class PongUIManager : NetworkBehaviour
 
     public void PauseGame()
     {
-
+        if(Mirror3DPongGameDriver.gameDriver.GameState == PongGameState.Paused)
+        {
+            Mirror3DPongGameDriver.gameDriver.UnPauseGame();
+        }
+        else
+        {
+            Mirror3DPongGameDriver.gameDriver.PauseGame();
+        }
     }
 
     public void ResetGame()

@@ -25,6 +25,7 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
     private int p2Score = 0;
     private int p2Wins = 0;
     private PongGameState gameState = PongGameState.Setup;
+    private PongGameState pausedState;
     [SerializeField] [SyncVar]
     private int winPoint = 5;
     [SerializeField] [SyncVar]
@@ -397,6 +398,11 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
 
     public void Reset()
     {
+        if(gameState == PongGameState.Paused)
+        {
+            Time.timeScale = 1f;
+            RpcSetTimeScale(1f);
+        }
         if(currentBall != null)
         {
             NetworkServer.Destroy(currentBall);
@@ -422,6 +428,29 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
         SetWinText(0, 0);
         RpcSetWinText(0, 0);
         Reset();
+    }
+
+    public void PauseGame()
+    {
+        if(gameState != PongGameState.Setup)
+        {
+            pausedState = gameState;
+            RpcSetCountdownText("Paused");
+            gameState = PongGameState.Paused;
+            Time.timeScale = 0f;
+            RpcSetTimeScale(0f);
+        }
+    }
+
+    public void UnPauseGame()
+    {
+        if(gameState == PongGameState.Paused)
+        {
+            Time.timeScale = 1f;
+            RpcSetTimeScale(1f);
+            RpcSetCountdownText("");
+            gameState = pausedState;
+        }
     }
 
     public int PlayerClockIn(uint pId, bool isVR, NetworkConnection conn)
@@ -519,5 +548,11 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
     void RpcEnableBoundaries(bool enable)
     {
         topBoundary.SetActive(enable);
+    }
+
+    [ClientRpc]
+    void RpcSetTimeScale(float newTime)
+    {
+        Time.timeScale = newTime;
     }
 }

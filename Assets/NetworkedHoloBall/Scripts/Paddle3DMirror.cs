@@ -30,8 +30,11 @@ public class Paddle3DMirror : NetworkBehaviour
     private bool hasGripBeenPressedThisFrame;
     private bool hasTriggerBeenReleasedThisFrame;
     private bool hasGripBeenReleasedThisFrame;
+    private bool hasTouchpadBeenPressedThisFrame;
+    private bool hasTouchpadBeenReleasedThisFrame;
     private bool isTriggerPressed;
     private bool isGripPressed;
+    private bool isTouchpadPressed;
 
     //public SteamVR_TrackedObject trackedController;
     private GameObject trackedController;
@@ -71,6 +74,8 @@ public class Paddle3DMirror : NetworkBehaviour
         hasTriggerBeenPressedThisFrame = false;
         hasTriggerBeenReleasedThisFrame = false;
         hasGripBeenReleasedThisFrame = false;
+        hasTouchpadBeenPressedThisFrame = false;
+        hasTouchpadBeenReleasedThisFrame = false;
         if (steamDevice.GetTouchDown(SteamVR_Controller.ButtonMask.Trigger))
         {
 
@@ -110,6 +115,25 @@ public class Paddle3DMirror : NetworkBehaviour
                 hasGripBeenReleasedThisFrame = true;
             isGripPressed = false;
         }
+
+        if (steamDevice.GetPressDown(SteamVR_Controller.ButtonMask.Touchpad))
+        {
+            Debug.Log("GetTouchDown Touchpad");
+
+            if (!isTouchpadPressed)
+                hasTouchpadBeenPressedThisFrame = true;
+
+            isTouchpadPressed = true;
+        }
+        else if (steamDevice.GetPressUp(SteamVR_Controller.ButtonMask.Touchpad))
+        {
+            Debug.Log("GetTouchUp Touchpad");
+
+            if (isTouchpadPressed)
+                hasTouchpadBeenReleasedThisFrame = true;
+
+            isTouchpadPressed = false;
+        }
     }
 
     // Update is called once per frame
@@ -125,10 +149,10 @@ public class Paddle3DMirror : NetworkBehaviour
         QueryController();
 
        
-        /*if (hasTriggerBeenPressedThisFrame)
+        if (hasTouchpadBeenPressedThisFrame)
         {
-            OnTriggerPressed();
-        }*/
+            OnTouchpadPressed();
+        }
     }
 
     private void UpdateTransform()
@@ -148,7 +172,24 @@ public class Paddle3DMirror : NetworkBehaviour
         return steamDevice.angularVelocity;
     }
 
-    
+
+    private void OnTouchpadPressed()
+    {
+        CmdPauseGame();
+    }
+
+    [Command]
+    void CmdPauseGame()
+    {
+        if(Mirror3DPongGameDriver.gameDriver.GameState == PongGameState.Paused)
+        {
+            Mirror3DPongGameDriver.gameDriver.UnPauseGame();
+        }
+        else
+        {
+            Mirror3DPongGameDriver.gameDriver.PauseGame();
+        }
+    }
 
     /*private void OnTriggerPressed()
     {

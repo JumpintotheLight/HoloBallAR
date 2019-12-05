@@ -46,10 +46,10 @@ public class PongPlayerController : NetworkBehaviour
 
         transform.Translate(x, 0, z);
 
-        /*if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            CmdStartBall(playerNum);
-        }*/
+            CmdPauseGame();
+        }
 
         mouseLook.LookRotation(transform, Camera.main.transform);
 
@@ -87,6 +87,19 @@ public class PongPlayerController : NetworkBehaviour
     void TargetSetClientTextRotation(NetworkConnection target, int pN)
     {
         Mirror3DPongGameDriver.gameDriver.SetClientTextRotation(pN);
+    }
+
+    [Command]
+    void CmdPauseGame()
+    {
+        if(Mirror3DPongGameDriver.gameDriver.GameState == PongGameState.Paused)
+        {
+            Mirror3DPongGameDriver.gameDriver.UnPauseGame();
+        }
+        else
+        {
+            Mirror3DPongGameDriver.gameDriver.PauseGame();
+        }
     }
 
     /* [Command]
