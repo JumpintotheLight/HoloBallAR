@@ -13,6 +13,8 @@ public class PongUIManager : NetworkBehaviour
     public Text victoryPointText;
     public Slider victorySlider;
     public Dropdown advantageDropdown;
+    public Toggle singlePlayerToggle;
+    public Dropdown comLevelDropdown;
     public Toggle continuousPlayToggle;
     public Dropdown bActiveDropdown;
     public Text bAngleText;
@@ -21,6 +23,7 @@ public class PongUIManager : NetworkBehaviour
     public Slider bWidthSlider;
     public Text bHeightText;
     public Slider bHeightSlider;
+    public Text hideManagerButtonText;
 
     private bool controlsInteractalbe = true;
     // Start is called before the first frame update
@@ -53,6 +56,16 @@ public class PongUIManager : NetworkBehaviour
         Mirror3DPongGameDriver.gameDriver.AdvantageNeeded = advantageDropdown.value;
     }
 
+    public void SetSinglePlayer()
+    {
+        Mirror3DPongGameDriver.gameDriver.AiPlayerActive = singlePlayerToggle.isOn;
+    }
+
+    public void SetComputerLevel()
+    {
+        Mirror3DPongGameDriver.gameDriver.AiLevel = comLevelDropdown.value + 1;
+    }
+
     public void SetBoundariesActive()
     {
         Mirror3DPongGameDriver.gameDriver.BoundariesActive = bActiveDropdown.value == 0 ? true : false;
@@ -70,18 +83,18 @@ public class PongUIManager : NetworkBehaviour
         bHeightText.text = Mirror3DPongGameDriver.gameDriver.BoundaryHeight.ToString();
     }
 
-    public void SetBoundaryAngle()
+    public void SetGameSpaceAngle()
     {
-        Mirror3DPongGameDriver.gameDriver.BoundaryAngle = bAngleSlider.value;
-        bAngleText.text = Mirror3DPongGameDriver.gameDriver.BoundaryAngle.ToString();
+        Mirror3DPongGameDriver.gameDriver.GameSpaceAngle = bAngleSlider.value;
+        bAngleText.text = Mirror3DPongGameDriver.gameDriver.GameSpaceAngle.ToString();
     }
 
     public void StartGame()
     {
-        if(Mirror3DPongGameDriver.gameDriver.GameState == PongGameState.Setup && Mirror3DPongGameDriver.gameDriver.PlayerCount == 2)
+        Mirror3DPongGameDriver.gameDriver.StartGame();
+        if(Mirror3DPongGameDriver.gameDriver.GameState != PongGameState.Setup)
         {
             Mirror3DPongGameDriver.gameDriver.ContinuousPlay = continuousPlayToggle.isOn;
-            Mirror3DPongGameDriver.gameDriver.StartGame();
             SetControlsInteractable(false);
         }
     }
@@ -122,12 +135,22 @@ public class PongUIManager : NetworkBehaviour
     public void HideManager()
     {
         uiManagerContainer.SetActive(!uiManagerContainer.activeSelf);
+        if(uiManagerContainer.activeSelf == true)
+        {
+            hideManagerButtonText.text = "Hide Manager";
+        }
+        else
+        {
+            hideManagerButtonText.text = "Show Manager";
+        }
     }
 
     private void SetControlsInteractable(bool active)
     {
         controlsInteractalbe = active;
         victorySlider.interactable = active;
+        singlePlayerToggle.interactable = active;
+        comLevelDropdown.interactable = active;
         continuousPlayToggle.interactable = active;
         advantageDropdown.interactable = active;
         bActiveDropdown.interactable = active;

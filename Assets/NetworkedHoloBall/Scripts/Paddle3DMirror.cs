@@ -148,6 +148,10 @@ public class Paddle3DMirror : NetworkBehaviour
 
         QueryController();
 
+        if (hasTriggerBeenPressedThisFrame)
+        {
+            OnTriggerPressed();
+        }
        
         if (hasTouchpadBeenPressedThisFrame)
         {
@@ -172,6 +176,13 @@ public class Paddle3DMirror : NetworkBehaviour
         return steamDevice.angularVelocity;
     }
 
+    private void OnTriggerPressed()
+    {
+        if (isServer)
+        {
+            Mirror3DPongGameDriver.gameDriver.StartGame();
+        }
+    }
 
     private void OnTouchpadPressed()
     {

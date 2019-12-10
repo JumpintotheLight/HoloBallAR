@@ -40,7 +40,7 @@ public class NetworkManager3DPong : NetworkManager
     {
         base.OnClientConnect(conn);
 
-        managerUI.SetActive(false);
+        
 
         CreateVrPongPlayerMessage newPlayerMessage = new CreateVrPongPlayerMessage
         {

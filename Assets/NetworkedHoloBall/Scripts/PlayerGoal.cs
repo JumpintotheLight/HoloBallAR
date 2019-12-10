@@ -23,11 +23,47 @@ public class PlayerGoal : NetworkBehaviour
         Debug.Log("Player " + goalNum + " goal says his ID is: " + localPlayerId);
     }
 
-    void OnCollisionEnter(Collision collision)
+    /*void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.tag == "Ball")
         {
             Destroy(collision.gameObject);
+            if (isServer)
+            {
+                Mirror3DPongGameDriver.gameDriver.ScorePoint(goalNum);
+            }
+
+           // if (playerIsVR)
+          //  {
+          //      NetworkIdentity.spawned[localPlayerId].gameObject.GetComponent<VRPongPlayerController>().OpponentScored();
+          //  }
+          //  else
+          //  {
+          //      NetworkIdentity.spawned[localPlayerId].gameObject.GetComponent<PongPlayerController>().OpponentScored();
+          //  }
+
+           // //CmdScorePoint(goalNum);
+        }
+    }*/
+
+    /*void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.tag == "Ball")
+        {
+            Destroy(collision.gameObject);
+            if (isServer)
+            {
+                Mirror3DPongGameDriver.gameDriver.ScorePoint(goalNum);
+            }
+
+        }
+    }*/
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.tag == "Ball")
+        {
+            Destroy(other.gameObject);
             if (isServer)
             {
                 Mirror3DPongGameDriver.gameDriver.ScorePoint(goalNum);
@@ -45,6 +81,8 @@ public class PlayerGoal : NetworkBehaviour
             //CmdScorePoint(goalNum);
         }
     }
+
+
 
     /*[Command]
     public void CmdScorePoint(int gN)

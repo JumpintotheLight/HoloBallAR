@@ -55,16 +55,37 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
     [SerializeField]
     private float boundaryHeight = 1.514f;
     [SerializeField]
-    private float boundaryAngle = 0f;
+    private float gameSpaceAngle = 349f;
     [SerializeField]
     private bool boundariesActive = true;
 
-    //Goals, Player spawns, and world container
-    private GameObject p1Goal;
-    private GameObject p2Goal;
+    //Goals, Player spawns, game space container, and goal scale without boundaries
+    //[SerializeField]
+    ///private float unboundGoalWidth;
+    //[SerializeField]
+    //private float unboundGoalHeight;
+    private GameObject gameSpaceContainer;
+    //private GameObject p1Goal;
+    //private GameObject p2Goal;
     private GameObject p1Start;
     private GameObject p2Start;
-    private GameObject worldContainer;
+
+
+    //AI Player Fields
+    [SerializeField]
+    private GameObject aiPlayerPrefab;
+    private GameObject aiPlayer;
+    [SerializeField]
+    private Vector2 aiSpeedFactor;
+    [SerializeField]
+    private float aiErrorXFactor;
+    [SerializeField]
+    private float aiErrorYFactor;
+    [SerializeField]
+    private int aiLevel = 1;
+    private Transform aiStartPos;
+    private bool aiPlayerActive = false;
+
 
 
     //UI Elements
@@ -76,6 +97,7 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
     public Text countdownText;
 
     private int playerCount = 0;
+    private int minPlayerCount = 2;
     //private bool gameWon = false;
 
     private void Awake()
@@ -97,9 +119,14 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
         //Find and set Boundaries
         //rightBoundary = GameObject.Find("RightBoundary");
         //leftBoundary = GameObject.Find("LeftBoundary");
+        gameSpaceContainer = GameObject.Find("GameSpace");
         topBoundary = GameObject.Find("TopBoundary");
+        //p1Goal = GameObject.Find("Player1Goal");
+        //p2Goal = GameObject.Find("Player2Goal");
+        aiStartPos = GameObject.Find("AISpawnPoint").transform;
         BoundaryWidth = boundaryWidth;
         BoundaryHeight = boundaryHeight;
+        GameSpaceAngle = gameSpaceAngle;
         BoundariesActive = boundariesActive;
     }
 
@@ -146,6 +173,10 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
             topBoundary.transform.localScale = new Vector3(topBoundary.transform.localScale.x, boundaryWidth, topBoundary.transform.localScale.z);
             //rightBoundary.transform.localPosition = new Vector3(rightBoundary.transform.localPosition.x, boundaryWidth / -2, rightBoundary.transform.localPosition.z);
             //leftBoundary.transform.localPosition = new Vector3(leftBoundary.transform.localPosition.x, boundaryWidth / 2, leftBoundary.transform.localPosition.z);
+
+            //Scale goals
+            /*ScaleGoalWidth(p1Goal);
+            ScaleGoalWidth(p2Goal);*/
         }
     }
 
@@ -155,17 +186,19 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
         set
         {
             boundaryHeight = Mathf.Clamp(value, 0.8f, 3f);
-            topBoundary.transform.localPosition = new Vector3(topBoundary.transform.localPosition.x, boundaryHeight, topBoundary.transform.localPosition.z);
+            topBoundary.transform.position = new Vector3(topBoundary.transform.position.x, boundaryHeight, topBoundary.transform.position.z);
+            /*ScaleGoalHeight(p1Goal);
+            ScaleGoalWidth(p2Goal);*/
         }
     }
 
-    public float BoundaryAngle
+    public float GameSpaceAngle
     {
-        get { return boundaryAngle; }
+        get { return gameSpaceAngle; }
         set
         {
-            boundaryAngle = Mathf.Clamp(value, -360f, 360f);
-            topBoundary.transform.localEulerAngles = new Vector3(topBoundary.transform.localEulerAngles.x, boundaryAngle, topBoundary.transform.localEulerAngles.z);
+            gameSpaceAngle = Mathf.Clamp(value, -360f, 360f);
+            gameSpaceContainer.transform.localEulerAngles = new Vector3(gameSpaceContainer.transform.localEulerAngles.x, gameSpaceAngle, gameSpaceContainer.transform.localEulerAngles.z);
         }
     }
 
@@ -180,16 +213,99 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
             {
                 RpcEnableBoundaries(boundariesActive);
             }
+            /*if (boundariesActive)
+            {
+                ScaleGoalWidth(p1Goal);
+                ScaleGoalWidth(p2Goal);
+                ScaleGoalHeight(p1Goal);
+                ScaleGoalHeight(p2Goal);
+            }
+            else
+            {
+                ScaleGoalUnbound(p1Goal);
+                ScaleGoalUnbound(p2Goal);
+            }*/
             //rightBoundary.SetActive(boundariesActive);
             //leftBoundary.SetActive(boundariesActive);
         }
     }
+
+    //Methods for scaling goal sizes
+   /* private void ScaleGoalWidth(GameObject goal)
+    {
+        float currentWidth = goal.GetComponent<Collider>().bounds.size.z;
+        float targetWidth = topBoundary.GetComponent<Collider>().bounds.size.y;
+        goal.transform.localScale = new Vector3(goal.transform.localScale.x, goal.transform.localScale.y, (targetWidth * goal.transform.localScale.z / currentWidth) + 1);
+    }
+
+    private void ScaleGoalHeight(GameObject goal)
+    {
+        float currentHeight = goal.GetComponent<Collider>().bounds.size.y;
+        float targetHeight = topBoundary.transform.position.y;
+        goal.transform.localScale = new Vector3(goal.transform.localScale.x, (targetHeight * goal.transform.localScale.y / currentHeight) + 1, goal.transform.localScale.z);
+    }
+
+    private void ScaleGoalUnbound(GameObject goal)
+    {
+        goal.transform.localScale = new Vector3(goal.transform.localScale.x, unboundGoalHeight, unboundGoalWidth);
+    }*/
 
     public bool ContinuousPlay
     {
         get { return continuousPlay; }
         set { continuousPlay = value; }
     }
+
+    public bool AiPlayerActive
+    {
+        get { return aiPlayerActive; }
+        set
+        {
+            aiPlayerActive = value;
+            if (aiPlayerActive)
+            {
+                minPlayerCount = 1;
+            }
+            else
+            {
+                minPlayerCount = 2;
+            }
+        }
+    }
+
+    public int AiLevel
+    {
+        get { return aiLevel; }
+        set
+        {
+            aiLevel = (int)Mathf.Clamp(value, 1, 5);
+        }
+    }
+
+    public Vector3 CurrentBallPosition
+    {
+        get
+        {
+            if(currentBall != null)
+            {
+                return currentBall.transform.position;
+            }
+            else
+            {
+                return Vector3.zero;
+            }
+        }
+    }
+
+    public bool BallHeadingTowardsAI
+    {
+        get
+        {
+            return currentBall.GetComponent<Rigidbody>().velocity.z > 0;
+        }
+    }
+
+
 
 
     private void Update()
@@ -226,9 +342,20 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
 
     public void StartGame()
     {
-        SpawnBall();
-        ballStartTimer = ballStartTime;
-        gameState = PongGameState.Standby;
+        if (isServer)
+        {
+            if(gameState == PongGameState.Setup && playerCount == minPlayerCount)
+            {
+                if (aiPlayerActive)
+                {
+                    SpawnAIPlayer();
+                }
+                SpawnBall();
+                ballStartTimer = ballStartTime;
+                gameState = PongGameState.Standby;
+            }
+        }
+        
     }
 
     public void StartBall()
@@ -387,6 +514,21 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
         ball.GetComponent<Rigidbody>().velocity = Vector3.zero;
         currentBall = ball;
         NetworkServer.Spawn(ball);
+        if (aiPlayerActive)
+        {
+            Debug.Log("AI player is null? " + aiPlayer == null);
+            Debug.Log("Ball is null? " + currentBall == null);
+        }
+    }
+
+    private void SpawnAIPlayer()
+    {
+        GameObject aiPlayer = (GameObject)Instantiate(aiPlayerPrefab, aiStartPos.position, aiStartPos.rotation);
+        AIPongPlayer aiCom = aiPlayer.GetComponent<AIPongPlayer>();
+        aiCom.speed += aiSpeedFactor * (aiLevel - 1);
+        aiCom.errorX = Mathf.Max(0f, aiCom.errorX - (aiErrorXFactor * (aiLevel -1)));
+        aiCom.errorY = Mathf.Max(0f, aiCom.errorY - (aiErrorYFactor * (aiLevel - 1)));
+        NetworkServer.Spawn(aiPlayer);
     }
 
     public void PlayerDisconnected()
@@ -407,6 +549,11 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
         {
             NetworkServer.Destroy(currentBall);
         }
+        if (aiPlayerActive)
+        {
+            NetworkServer.Destroy(aiPlayer);
+            playerCount--;
+        }
         gameState = PongGameState.Setup;
         priorityPlayer = 1;
         p1Score = 0;
@@ -415,7 +562,7 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
         RpcSetScoreText(0, 0);
         RpcSetCountdownText("");
         RpcClearVictoryText();
-        if((isClient && isServer && playerCount==2)||continuousPlay)
+        if(continuousPlay)
         {
             StartGame();
         }
@@ -470,10 +617,6 @@ public class Mirror3DPongGameDriver : NetworkBehaviour
             {
                 g.GetComponent<PlayerGoal>().BindToPlayer(pId, isVR);
             }
-        }
-        if (playerCount == 2 && isServer && isClient)
-        {
-            StartGame();
         }
         return playerCount;
     }
