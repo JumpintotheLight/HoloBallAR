@@ -5,12 +5,14 @@ using Mirror;
 
 public class PongPlayerController : NetworkBehaviour
 {
-    private MouseLook mouseLook;
+    //private MouseLook mouseLook;
 
     [SyncVar]
     private int playerNum = 0;
     private int pointsLost = 0;
 
+    // Store reference to camera since we use it in multiple places.
+    private Camera camera;
 
     public override void OnStartLocalPlayer()
     {
@@ -19,12 +21,13 @@ public class PongPlayerController : NetworkBehaviour
         if (isLocalPlayer)
         {
             // attach camera to player.. 3rd person view..
-            Camera.main.transform.parent = transform;
-            Camera.main.transform.localPosition = new Vector3(0, 1.33f, -0.69f);
-            Camera.main.transform.localRotation = Quaternion.Euler(6.31f, 0, 0);
+            camera = Camera.main;
+            camera.transform.parent = transform;
+            camera.transform.localPosition = new Vector3(0, 1.33f, -0.69f);
+            camera.transform.localRotation = Quaternion.Euler(6.31f, 0, 0);
 
-            mouseLook = new MouseLook();
-            mouseLook.Init(transform, Camera.main.transform);
+            //mouseLook = new MouseLook();
+            //mouseLook.Init(transform, camera.transform);
             Debug.Log("NVR Players Says his ID is: " + netId);
             CmdPlayerClockIn();
         }
@@ -51,9 +54,9 @@ public class PongPlayerController : NetworkBehaviour
             CmdPauseGame();
         }
 
-        mouseLook.LookRotation(transform, Camera.main.transform);
+        //mouseLook.LookRotation(transform, camera.transform);
 
-        transform.rotation = Camera.main.transform.rotation;
+        //transform.rotation = camera.transform.rotation;
     }
 
     public void OpponentScored()
