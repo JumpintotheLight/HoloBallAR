@@ -27,7 +27,9 @@ public class AIPongPlayer : NetworkBehaviour
         speed = baseSpeed;
         errorX = baseErrorX;
         errorY = baseErrorY;
-        CmdPlayerClockIn();
+
+        // FIXME FIXME - AI Pong Player is sending command without authority. 
+        //CmdPlayerClockIn();
     }
 
 
@@ -38,7 +40,7 @@ public class AIPongPlayer : NetworkBehaviour
         {
             if (Mirror3DPongGameDriver.gameDriver.GameState == PongGameState.Playing)
             {
-                if(Mirror3DPongGameDriver.gameDriver.BallHeadingTowardsAI)
+                if (Mirror3DPongGameDriver.gameDriver.BallHeadingTowardsAI)
                 {
                     float targetX = Random.Range(Mirror3DPongGameDriver.gameDriver.CurrentBallPosition.x - errorX, Mirror3DPongGameDriver.gameDriver.CurrentBallPosition.x + errorX);
                     float targetY = Random.Range(Mirror3DPongGameDriver.gameDriver.CurrentBallPosition.y - errorY, Mirror3DPongGameDriver.gameDriver.CurrentBallPosition.y + errorY);
@@ -50,9 +52,9 @@ public class AIPongPlayer : NetworkBehaviour
         }
     }
 
-    [Command]
-    void CmdPlayerClockIn()
-    {
-        playerNum = Mirror3DPongGameDriver.gameDriver.PlayerClockIn(netId, false, connectionToClient);
-    }
+    //[Command]
+    //void CmdPlayerClockIn()
+    //{
+    //    playerNum = Mirror3DPongGameDriver.gameDriver.PlayerClockIn(netId, false, connectionToClient);
+    //}
 }
