@@ -91,9 +91,26 @@ namespace Mirror
         }
 
         /// <summary>
-        /// connect host mode
+        /// Connect client to a NetworkServer instance.
         /// </summary>
-        internal static void ConnectLocalServer()
+        /// <param name="uri">Address of the server to connect to</param>
+        public static void Connect(Uri uri)
+        {
+            if (LogFilter.Debug) Debug.Log("Client Connect: " + uri);
+
+            RegisterSystemHandlers(false);
+            Transport.activeTransport.enabled = true;
+            InitializeTransportHandlers();
+
+            connectState = ConnectState.Connecting;
+            Transport.activeTransport.ClientConnect(uri);
+
+            // setup all the handlers
+            connection = new NetworkConnectionToServer();
+            connection.SetHandlers(handlers);
+        }
+
+        internal static void SetupLocalConnection()
         {
             if (LogFilter.Debug) Debug.Log("Client Connect Local Server");
 
@@ -112,26 +129,15 @@ namespace Mirror
 
             // create server connection to local client
             NetworkServer.SetLocalConnection(connectionToClient);
-            connectionToClient.Send(new ConnectMessage());
-        }
 
+        }
         /// <summary>
-        /// Called by the server to set the LocalClient's LocalPlayer object during NetworkServer.AddPlayer()
+        /// connect host mode
         /// </summary>
-        /// <param name="localPlayer"></param>
-        internal static void AddLocalPlayer(NetworkIdentity localPlayer)
+        internal static void ConnectLocalServer()
         {
-            if (LogFilter.Debug) Debug.Log("Local client AddLocalPlayer " + localPlayer.gameObject.name + " " + connection);
-            connection.isReady = true;
-            connection.identity = localPlayer;
-            if (localPlayer != null)
-            {
-                localPlayer.isClient = true;
-                NetworkIdentity.spawned[localPlayer.netId] = localPlayer;
-                localPlayer.connectionToServer = connection;
-            }
-            // there is no SystemOwnerMessage for local client. add to ClientScene here instead
-            ClientScene.InternalAddPlayer(localPlayer);
+            NetworkServer.OnConnected(NetworkServer.localConnection);
+            NetworkServer.localConnection.Send(new ConnectMessage());
         }
 
         static void InitializeTransportHandlers()
@@ -334,17 +340,17 @@ namespace Mirror
             return (float)NetworkTime.rtt;
         }
 
-        internal static void RegisterSystemHandlers(bool localClient)
+        internal static void RegisterSystemHandlers(bool hostMode)
         {
-            // local client / regular client react to some messages differently.
+            // host mode client / regular client react to some messages differently.
             // but we still need to add handlers for all of them to avoid
             // 'message id not found' errors.
-            if (localClient)
+            if (hostMode)
             {
-                RegisterHandler<ObjectDestroyMessage>(ClientScene.OnLocalClientObjectDestroy);
-                RegisterHandler<ObjectHideMessage>(ClientScene.OnLocalClientObjectHide);
+                RegisterHandler<ObjectDestroyMessage>(ClientScene.OnHostClientObjectDestroy);
+                RegisterHandler<ObjectHideMessage>(ClientScene.OnHostClientObjectHide);
                 RegisterHandler<NetworkPongMessage>((conn, msg) => { }, false);
-                RegisterHandler<SpawnMessage>(ClientScene.OnLocalClientSpawn);
+                RegisterHandler<SpawnMessage>(ClientScene.OnHostClientSpawn);
                 RegisterHandler<ObjectSpawnStartedMessage>((conn, msg) => { }); // host mode doesn't need spawning
                 RegisterHandler<ObjectSpawnFinishedMessage>((conn, msg) => { }); // host mode doesn't need spawning
                 RegisterHandler<UpdateVarsMessage>((conn, msg) => { });
@@ -359,7 +365,6 @@ namespace Mirror
                 RegisterHandler<ObjectSpawnFinishedMessage>(ClientScene.OnObjectSpawnFinished);
                 RegisterHandler<UpdateVarsMessage>(ClientScene.OnUpdateVarsMessage);
             }
-            RegisterHandler<ClientAuthorityMessage>(ClientScene.OnClientAuthority);
             RegisterHandler<RpcMessage>(ClientScene.OnRPCMessage);
             RegisterHandler<SyncEventMessage>(ClientScene.OnSyncEventMessage);
         }
@@ -401,6 +406,18 @@ namespace Mirror
                 if (LogFilter.Debug) Debug.Log("NetworkClient.RegisterHandler replacing " + handler + " - " + msgType);
             }
             handlers[msgType] = MessagePacker.MessageHandler<T>(handler, requireAuthentication);
+        }
+
+        /// <summary>
+        /// Register a handler for a particular message type.
+        /// <para>There are several system message types which you can add handlers for. You can also add your own message types.</para>
+        /// </summary>
+        /// <typeparam name="T">The message type to unregister.</typeparam>
+        /// <param name="handler"></param>
+        /// <param name="requireAuthentication">true if the message requires an authenticated connection</param>
+        public static void RegisterHandler<T>(Action<T> handler, bool requireAuthentication = true) where T : IMessageBase, new()
+        {
+            RegisterHandler( (NetworkConnection _, T value) => { handler(value); }, requireAuthentication) ;
         }
 
         /// <summary>
